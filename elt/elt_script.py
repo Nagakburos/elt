@@ -1,12 +1,12 @@
 import subprocess
 import time
 
-def wait_for_postgres(host, max_retires=5, delay_seconds=5):
+def wait_for_postgres(host, max_retries=5, delay_seconds=5):
     retries = 0
-    while retries < max_retires:
+    while retries < max_retries:
         try:
             result = subprocess.run(
-                [ "pg_isready", "-h", host], check=True capture_output=True, text=True)
+                ["pg_isready", "-h", host], check=True, capture_output=True, text=True)
             if "accepting connections" in result.stdout:
                 print ("Postgres Conectado!")
                 return True
@@ -14,7 +14,49 @@ def wait_for_postgres(host, max_retires=5, delay_seconds=5):
             print(f"Erro ao conectar o Postgres: {e}")
             retries += 1
             print(
-                f"Tentando Novamente em {delay_seconds} segundos... (Attempt {retries}/{max_retires})")
+                f"Tentando Novamente em {delay_seconds} segundos... (Attempt {retries}/{max_retries})")
             time.sleep(delay_seconds)
-        print ("Maximo de tentativas Realizadas. Fechando")
-            )
+    print ("Maximo de tentativas Realizadas. Fechando")
+    return False 
+if not wait_for_postgres(host="source_postgres"):
+    exit(1)
+print("Iniciando Script ELT...")
+
+source_config = {
+    'dbname': 'source_db',
+    'user': 'postgres',
+    'password': 'secret',
+    'host': 'source_postgres',
+}
+
+destination_config ={
+    'dbname': 'destination_db',
+    'user': 'postgres',
+    'password': 'secret',
+    'host:': 'destination_db',
+}
+
+dump_command = [
+    'pg_dump',
+    '-h', source_config['host'],
+    '-u', source_config['user'],
+    '-d', source_config['dbname'],
+    '-f', 'data_dump.sql',
+    '-w'
+]
+
+subprocess_env = dict(PGPASSWORD=source_config['password'])
+subprocess.run(dump_command, env=subprocess_env, check=True)
+
+load_command = [
+    'psql',
+    '-h', destination_config['host'],
+    '-u', destination_config['user'],
+    '-d', destination_config['dbname'],
+    '-a','-f', 'data_dump.sql',
+]
+
+subprocess_env = dict(PGPASSWORD=destination_config['password'])
+subprocess.run(load_command, env=subprocess_env, check=True)
+
+print("Encerrando Script ELT...")
