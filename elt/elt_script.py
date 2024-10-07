@@ -33,19 +33,20 @@ destination_config ={
     'dbname': 'destination_db',
     'user': 'postgres',
     'password': 'secret',
-    'host': 'destination_postgres',
+    'host': 'destination_postgres'
 }
 
 dump_command = [
     'pg_dump',
     '-h', source_config['host'],
-    '-U', source_config['user'],
+    '-U', source_config['user'],  # Garante que source_config['user'] contenha o valor correto
     '-d', source_config['dbname'],
     '-f', 'data_dump.sql',
     '-w'
 ]
 
 subprocess_env = dict(PGPASSWORD=source_config['password'])
+
 subprocess.run(dump_command, env=subprocess_env, check=True)
 
 load_command = [
