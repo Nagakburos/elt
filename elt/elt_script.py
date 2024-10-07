@@ -39,7 +39,7 @@ destination_config ={
 dump_command = [
     'pg_dump',
     '-h', source_config['host'],
-    '-U', source_config['user'],  # Garante que source_config['user'] contenha o valor correto
+    '-U', source_config['user'],
     '-d', source_config['dbname'],
     '-f', 'data_dump.sql',
     '-w'
